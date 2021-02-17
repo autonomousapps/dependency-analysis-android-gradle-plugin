@@ -83,6 +83,10 @@ internal class NoVariantOutputPaths(private val project: Project) {
   val aggregateGraphDotPath = layout("$ROOT_DIR/graph-all-variants.gv")
   val graphReasonPath = layout("$ROOT_DIR/graph-reason.gv")
 
+  // TODO temp
+  val projGraphDotPath = layout("$ROOT_DIR/proj-graph.gv")
+  val projModGraphDotPath = layout("$ROOT_DIR/proj-mod-graph.gv")
+
   @Suppress("SameParameterValue")
   private fun layout(path: String) = project.layout.buildDirectory.file(path)
 }

@@ -17,6 +17,10 @@ internal class DependencyGraph {
     }
   }
 
+  fun copy(): DependencyGraph {
+    return newGraph(edges())
+  }
+
   fun addEdge(from: String, to: String) {
     addEdge(Edge(BareNode(from), BareNode(to)))
   }
@@ -116,18 +120,34 @@ internal class DependencyGraph {
     return DepthFirstSearch(this, node).subgraph
   }
 
-   fun removeEdge(from: String, to: String): DependencyGraph {
-     val graph = DependencyGraph()
-     edges().forEach { edge ->
-       if (!(edge.from.identifier == from && edge.to.identifier == to)) {
-         graph.addEdge(edge)
-       }
-     }
-     // Removing an edge should not be equivalent to removing a node
-     graph.addNode(from)
-     graph.addNode(to)
-     return graph
-   }
+  fun removeEdge(from: String, to: String): DependencyGraph {
+    val graph = DependencyGraph()
+    edges().forEach { edge ->
+      if (!(edge.from.identifier == from && edge.to.identifier == to)) {
+        graph.addEdge(edge)
+      }
+    }
+
+    graph.addNode(from)
+    graph.addNode(to)
+
+    return graph
+  }
+
+  fun removeEdges(root: String, edges: List<Pair<String, String>>): DependencyGraph {
+    if (edges.isEmpty()) return copy()
+
+    val graph = DependencyGraph()
+    edges().forEach { edge ->
+      if (!edges.contains(edge.from.identifier to edge.to.identifier)) {
+        graph.addEdge(edge)
+      }
+    }
+
+    // This does a depth-first search from the root, ensuring that dangling nodes & subgraphs are
+    // removed
+    return graph.subgraph(root)
+  }
 }
 
 internal fun missingNode(node: Node): Nothing = missingNode(node.identifier)

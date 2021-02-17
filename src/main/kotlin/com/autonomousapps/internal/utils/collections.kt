@@ -156,6 +156,24 @@ internal inline fun <T> Iterable<T>.partitionToSets(predicate: (T) -> Boolean): 
   return Pair(first, second)
 }
 
+/**
+ * Partitions an `Iterable` into a pair of sets matching the two predicates, discarding the rest.
+ */
+internal inline fun <T> Iterable<T>.partitionOf(
+  predicate1: (T) -> Boolean, predicate2: (T) -> Boolean
+): Pair<Set<T>, Set<T>> {
+  val first = HashSet<T>()
+  val second = HashSet<T>()
+  for (element in this) {
+    if (predicate1(element)) {
+      first.add(element)
+    } else if (predicate2(element)) {
+      second.add(element)
+    }
+  }
+  return Pair(first, second)
+}
+
 // standard `all` function returns true if collection is empty!
 internal inline fun <T> Collection<T>.reallyAll(predicate: (T) -> Boolean): Boolean {
   if (isEmpty()) return false

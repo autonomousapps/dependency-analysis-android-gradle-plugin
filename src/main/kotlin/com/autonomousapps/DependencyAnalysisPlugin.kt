@@ -878,6 +878,11 @@ class DependencyAnalysisPlugin : Plugin<Project> {
       }
       comprehensiveAdvice.set(aggregateAdviceTask.flatMap { it.output })
       dependencyRenamingMap.set(getExtension().dependencyRenamingMap)
+      graphJson.set(aggregateGraphTask.flatMap { it.outputJson })
+
+      // TODO remove
+      projGraphPath.set(paths.projGraphDotPath)
+      projGraphModPath.set(paths.projModGraphDotPath)
     }
 
     // Permits users to reason about the entire project rather than worry about variants
