@@ -5,11 +5,10 @@ package com.autonomousapps.tasks
 import com.autonomousapps.TASK_GROUP_DEP
 import com.autonomousapps.advice.ComprehensiveAdvice
 import com.autonomousapps.graph.DependencyGraph
-import com.autonomousapps.graph.GraphWriter
 import com.autonomousapps.internal.ConsoleReport
 import com.autonomousapps.internal.advice.AdvicePrinter
 import com.autonomousapps.internal.utils.fromJson
-import com.autonomousapps.internal.utils.getAndDelete
+import com.autonomousapps.internal.utils.log
 import com.autonomousapps.internal.utils.partitionOf
 import com.autonomousapps.shouldFail
 import com.autonomousapps.shouldNotBeSilent
@@ -40,6 +39,8 @@ abstract class ProjectHealthTask : DefaultTask() {
   @get:InputFile
   abstract val graphJson: RegularFileProperty
 
+  // TODO remove these two output files
+
   @get:OutputFile
   abstract val projGraphPath: RegularFileProperty
 
@@ -55,10 +56,6 @@ abstract class ProjectHealthTask : DefaultTask() {
   }
 
   @TaskAction fun action() {
-    // TODO remove
-    val projGraphFile = projGraphPath.getAndDelete()
-    val projModGraphFile = projGraphModPath.getAndDelete()
-
     val inputFile = comprehensiveAdvice.get().asFile
 
     val consoleReport = ConsoleReport.from(compAdvice)
@@ -71,31 +68,14 @@ abstract class ProjectHealthTask : DefaultTask() {
       if (shouldNotBeSilent()) {
         logger.quiet(consoleText)
         if (consoleReport.isNotEmpty()) {
-          // TODO prettify
-          val origNodeCount = origGraph.nodeCount()
-          val origEdgeCount = origGraph.edgeCount()
-          val newNodeCount = expectedResultGraph.nodeCount()
-          val newEdgeCount = expectedResultGraph.edgeCount()
-          logger.quiet("Current graph has $origNodeCount nodes and $origEdgeCount. If you follow all of this advice, the new graph will have $newNodeCount nodes and $newEdgeCount edges.")
-
-          // TODO remove
-          projGraphFile.writeText(GraphWriter.toDot(origGraph))
-          projModGraphFile.writeText(GraphWriter.toDot(expectedResultGraph))
-          logger.quiet("Paths to orig graph:\n- ${projGraphFile.absolutePath}\nmod graph:\n- ${projModGraphFile.absolutePath}")
-
+          logger.quiet(metricsText)
           logger.quiet("See machine-readable report at ${inputFile.path}")
         }
       } else {
         logger.debug(consoleText)
         if (consoleReport.isNotEmpty()) {
-          // TODO prettify
-          val origNodeCount = origGraph.nodeCount()
-          val origEdgeCount = origGraph.edgeCount()
-          val newNodeCount = expectedResultGraph.nodeCount()
-          val newEdgeCount = expectedResultGraph.edgeCount()
-          logger.quiet("Current graph has $origNodeCount nodes and $origEdgeCount edges. If you follow all of this advice, the new graph will have $newNodeCount nodes and $newEdgeCount edges.")
-
-          logger.debug("See machine-readable report at ${inputFile.path}")
+          logger.log(metricsText)
+          logger.log("See machine-readable report at ${inputFile.path}")
         }
       }
     }
@@ -105,11 +85,23 @@ abstract class ProjectHealthTask : DefaultTask() {
     }
   }
 
+  private val metricsText by lazy {
+    val origNodeCount = origGraph.nodeCount()
+    val origEdgeCount = origGraph.edgeCount()
+    val newNodeCount = expectedResultGraph.nodeCount()
+    val newEdgeCount = expectedResultGraph.edgeCount()
+
+    "Current graph has $origNodeCount nodes and $origEdgeCount edges. If you follow all of this" +
+      " advice, the new graph will have $newNodeCount nodes and $newEdgeCount edges.\n"
+  }
+
   private val expectedResultGraph by lazy {
     val result = origGraph.copy()
 
-    val (addAdvice, removeAdvice) = compAdvice.dependencyAdvice
-      .partitionOf({ it.isAdd() }, { it.isRemove() })
+    val (addAdvice, removeAdvice) = compAdvice.dependencyAdvice.partitionOf(
+      { it.isAdd() },
+      { it.isRemove() }
+    )
 
     val projPath = compAdvice.projectPath
     addAdvice.forEach {
