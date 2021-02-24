@@ -4,28 +4,28 @@ package com.autonomousapps.tasks
 
 import com.autonomousapps.TASK_GROUP_DEP
 import com.autonomousapps.advice.ComprehensiveAdvice
-import com.autonomousapps.graph.DependencyGraph
 import com.autonomousapps.internal.ConsoleReport
+import com.autonomousapps.internal.ProjectMetrics
 import com.autonomousapps.internal.advice.AdvicePrinter
 import com.autonomousapps.internal.utils.fromJson
 import com.autonomousapps.internal.utils.log
-import com.autonomousapps.internal.utils.partitionOf
 import com.autonomousapps.shouldFail
 import com.autonomousapps.shouldNotBeSilent
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.MapProperty
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
+import org.gradle.api.tasks.TaskAction
 
 abstract class ProjectHealthTask : DefaultTask() {
 
   init {
     group = TASK_GROUP_DEP
     description = "Consumes output of aggregateAdvice and can fail the build if desired"
-
-    // TODO remove
-    outputs.upToDateWhen { false }
   }
 
   @get:PathSensitive(PathSensitivity.NONE)
@@ -37,22 +37,14 @@ abstract class ProjectHealthTask : DefaultTask() {
 
   @get:PathSensitive(PathSensitivity.NONE)
   @get:InputFile
-  abstract val graphJson: RegularFileProperty
-
-  // TODO remove these two output files
-
-  @get:OutputFile
-  abstract val projGraphPath: RegularFileProperty
-
-  @get:OutputFile
-  abstract val projGraphModPath: RegularFileProperty
-
-  private val origGraph by lazy {
-    graphJson.fromJson<DependencyGraph>()
-  }
+  abstract val projMetricsJson: RegularFileProperty
 
   private val compAdvice by lazy {
     comprehensiveAdvice.fromJson<ComprehensiveAdvice>()
+  }
+
+  private val projMetrics by lazy {
+    projMetricsJson.fromJson<ProjectMetrics>()
   }
 
   @TaskAction fun action() {
@@ -86,30 +78,12 @@ abstract class ProjectHealthTask : DefaultTask() {
   }
 
   private val metricsText by lazy {
-    val origNodeCount = origGraph.nodeCount()
-    val origEdgeCount = origGraph.edgeCount()
-    val newNodeCount = expectedResultGraph.nodeCount()
-    val newEdgeCount = expectedResultGraph.edgeCount()
+    val origNodeCount = projMetrics.origGraph.nodeCount
+    val origEdgeCount = projMetrics.origGraph.edgeCount
+    val newNodeCount = projMetrics.newGraph.nodeCount
+    val newEdgeCount = projMetrics.newGraph.edgeCount
 
     "Current graph has $origNodeCount nodes and $origEdgeCount edges. If you follow all of this" +
       " advice, the new graph will have $newNodeCount nodes and $newEdgeCount edges.\n"
-  }
-
-  private val expectedResultGraph by lazy {
-    val result = origGraph.copy()
-
-    val (addAdvice, removeAdvice) = compAdvice.dependencyAdvice.partitionOf(
-      { it.isAdd() },
-      { it.isRemove() }
-    )
-
-    val projPath = compAdvice.projectPath
-    addAdvice.forEach {
-      result.addEdge(from = projPath, to = it.dependency.identifier)
-    }
-
-    result.removeEdges(projPath, removeAdvice.map { removal ->
-      projPath to removal.dependency.identifier
-    })
   }
 }

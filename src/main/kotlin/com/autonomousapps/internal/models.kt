@@ -2,12 +2,21 @@
 
 package com.autonomousapps.internal
 
-import com.autonomousapps.advice.*
+import com.autonomousapps.advice.Advice
+import com.autonomousapps.advice.ComprehensiveAdvice
+import com.autonomousapps.advice.Dependency
+import com.autonomousapps.advice.HasDependency
+import com.autonomousapps.advice.PluginAdvice
+import com.autonomousapps.graph.DependencyGraph
 import com.autonomousapps.internal.AndroidPublicRes.Line
 import com.autonomousapps.internal.Location.Companion.findMatch
 import com.autonomousapps.internal.advice.ComputedAdvice
 import com.autonomousapps.internal.asm.Opcodes
-import com.autonomousapps.internal.utils.*
+import com.autonomousapps.internal.utils.asString
+import com.autonomousapps.internal.utils.efficient
+import com.autonomousapps.internal.utils.filterToSet
+import com.autonomousapps.internal.utils.mapToSet
+import com.autonomousapps.internal.utils.resolvedVersion
 import org.gradle.api.artifacts.component.ComponentIdentifier
 import java.io.File
 import java.io.Serializable
@@ -249,7 +258,9 @@ data class ComponentWithInlineMembers(
    */
   val imports: Set<String>
 ) : Comparable<ComponentWithInlineMembers> {
-  override fun compareTo(other: ComponentWithInlineMembers): Int = dependency.compareTo(other.dependency)
+  override fun compareTo(other: ComponentWithInlineMembers): Int = dependency.compareTo(
+    other.dependency
+  )
 }
 
 data class ComponentWithConstantMembers(
@@ -262,7 +273,9 @@ data class ComponentWithConstantMembers(
    */
   val imports: Set<String>
 ) : Comparable<ComponentWithConstantMembers> {
-  override fun compareTo(other: ComponentWithConstantMembers): Int = dependency.compareTo(other.dependency)
+  override fun compareTo(other: ComponentWithConstantMembers): Int = dependency.compareTo(
+    other.dependency
+  )
 }
 
 /**
@@ -288,7 +301,8 @@ data class Imports(
 )
 
 enum class SourceType {
-  JAVA, KOTLIN
+  JAVA,
+  KOTLIN
 }
 
 data class Res(
@@ -430,7 +444,10 @@ data class AnalyzedClass(
 }
 
 enum class Access {
-  PUBLIC, PROTECTED, PRIVATE, PACKAGE_PRIVATE;
+  PUBLIC,
+  PROTECTED,
+  PRIVATE,
+  PACKAGE_PRIVATE;
 
   companion object {
     fun fromInt(access: Int): Access {
@@ -633,7 +650,11 @@ internal data class AbiExclusions(
   @Transient
   private val pathRegexes = pathExclusions.mapToSet(String::toRegex)
 
-  fun excludesAnnotation(fqcn: String): Boolean = annotationRegexes.any { it.containsMatchIn(fqcn.dotty()) }
+  fun excludesAnnotation(fqcn: String): Boolean = annotationRegexes.any {
+    it.containsMatchIn(
+      fqcn.dotty()
+    )
+  }
 
   fun excludesClass(fqcn: String) = classRegexes.any { it.containsMatchIn(fqcn.dotty()) }
 
@@ -644,5 +665,34 @@ internal data class AbiExclusions(
 
   companion object {
     val NONE = AbiExclusions()
+  }
+}
+
+internal data class ProjectMetrics(
+  val origGraph: GraphMetrics,
+  val newGraph: GraphMetrics
+) {
+
+  companion object {
+    fun fromGraphs(
+      origGraph: DependencyGraph,
+      expectedResultGraph: DependencyGraph
+    ): ProjectMetrics {
+      return ProjectMetrics(
+        origGraph = GraphMetrics.fromGraph(origGraph),
+        newGraph = GraphMetrics.fromGraph(expectedResultGraph)
+      )
+    }
+  }
+
+  internal data class GraphMetrics(
+    val nodeCount: Int,
+    val edgeCount: Int
+  ) {
+    companion object {
+      fun fromGraph(graph: DependencyGraph): GraphMetrics {
+        return GraphMetrics(nodeCount = graph.nodeCount(), edgeCount = graph.edgeCount())
+      }
+    }
   }
 }

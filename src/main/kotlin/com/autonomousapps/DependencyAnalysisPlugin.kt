@@ -869,6 +869,22 @@ class DependencyAnalysisPlugin : Plugin<Project> {
       outputDot.set(paths.aggregateGraphDotPath)
     }
 
+    // Calculates basic project metrics for reporting by projectHealth.
+    val measureProjectTask = tasks.register<ProjectMetricsTask>("measureProject") {
+      onlyIf {
+        // This will not exist if aggregateAdviceTask was SKIPPED
+        comprehensiveAdvice.get().asFile.exists()
+      }
+      comprehensiveAdvice.set(aggregateAdviceTask.flatMap { it.output })
+      graphJson.set(aggregateGraphTask.flatMap { it.outputJson })
+
+      output.set(paths.projMetricsPath)
+
+      // TODO remove
+      projGraphPath.set(paths.projGraphDotPath)
+      projGraphModPath.set(paths.projModGraphDotPath)
+    }
+
     // This task is a sort of alias for "aggregateAdvice" that will fail the build if that task
     // finds fatal issues (as configured by the user).
     tasks.register<ProjectHealthTask>("projectHealth") {
@@ -878,11 +894,7 @@ class DependencyAnalysisPlugin : Plugin<Project> {
       }
       comprehensiveAdvice.set(aggregateAdviceTask.flatMap { it.output })
       dependencyRenamingMap.set(getExtension().dependencyRenamingMap)
-      graphJson.set(aggregateGraphTask.flatMap { it.outputJson })
-
-      // TODO remove
-      projGraphPath.set(paths.projGraphDotPath)
-      projGraphModPath.set(paths.projModGraphDotPath)
+      projMetricsJson.set(measureProjectTask.flatMap { it.output })
     }
 
     // Permits users to reason about the entire project rather than worry about variants
