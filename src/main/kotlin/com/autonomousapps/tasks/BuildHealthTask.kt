@@ -5,7 +5,9 @@ package com.autonomousapps.tasks
 import com.autonomousapps.TASK_GROUP_DEP
 import com.autonomousapps.advice.ComprehensiveAdvice
 import com.autonomousapps.internal.ConsoleReport
+import com.autonomousapps.internal.ProjectMetrics
 import com.autonomousapps.internal.advice.AdvicePrinter
+import com.autonomousapps.internal.utils.fromJson
 import com.autonomousapps.internal.utils.fromJsonList
 import com.autonomousapps.shouldFail
 import com.autonomousapps.shouldNotBeSilent
@@ -24,7 +26,7 @@ abstract class BuildHealthTask : DefaultTask() {
   }
 
   /**
-   * A `List<BuildHealth>`.
+   * A `List<ComprehensiveAdvice>`.
    */
   @get:PathSensitive(PathSensitivity.NONE)
   @get:InputFile
@@ -32,6 +34,14 @@ abstract class BuildHealthTask : DefaultTask() {
 
   @get:Input
   abstract val dependencyRenamingMap: MapProperty<String, String>
+
+  @get:PathSensitive(PathSensitivity.NONE)
+  @get:InputFile
+  abstract val buildMetricsJson: RegularFileProperty
+
+  private val buildMetrics by lazy {
+    buildMetricsJson.fromJson<ProjectMetrics>()
+  }
 
   @TaskAction fun action() {
     val buildHealth = adviceReport.fromJsonList<ComprehensiveAdvice>()
@@ -62,8 +72,10 @@ abstract class BuildHealthTask : DefaultTask() {
     }
     if (shouldPrintPath) {
       if (shouldNotBeSilent()) {
+        logger.quiet(metricsText)
         logger.quiet("See machine-readable report at $inputFilePath\n")
       } else {
+        logger.debug(metricsText)
         logger.debug("See machine-readable report at $inputFilePath\n")
       }
     }
@@ -76,4 +88,15 @@ abstract class BuildHealthTask : DefaultTask() {
   private fun projectHeaderText(projectPath: String): String =
     if (projectPath == ":") "Advice for root project"
     else "Advice for project $projectPath"
+
+  // TODO dedup with ProjectHealthTask
+  private val metricsText by lazy {
+    val origNodeCount = buildMetrics.origGraph.nodeCount
+    val origEdgeCount = buildMetrics.origGraph.edgeCount
+    val newNodeCount = buildMetrics.newGraph.nodeCount
+    val newEdgeCount = buildMetrics.newGraph.edgeCount
+
+    "Current graph has $origNodeCount nodes and $origEdgeCount edges. If you follow all of this" +
+      " advice, the new graph will have $newNodeCount nodes and $newEdgeCount edges.\n"
+  }
 }

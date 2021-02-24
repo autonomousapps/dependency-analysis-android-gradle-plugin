@@ -433,7 +433,7 @@ class DependencyAnalysisPlugin : Plugin<Project> {
       isCanBeConsumed = false
     }
 
-    val adviceReport = tasks.register<AdviceAggregateReportTask>("adviceReport") {
+    val adviceReportTask = tasks.register<AdviceAggregateReportTask>("adviceReport") {
       dependsOn(adviceAllConf)
 
       adviceAllReports = adviceAllConf
@@ -453,10 +453,21 @@ class DependencyAnalysisPlugin : Plugin<Project> {
       outputRevSubGraphDot.set(outputPaths.projectGraphRevSubPath)
     }
 
+    val measureBuildTask = tasks.register<BuildMetricsTask>("measureBuild") {
+      adviceReport.set(adviceReportTask.flatMap { it.projectReport })
+      fullGraphJson.set(graphTask.flatMap { it.outputFullGraphJson })
+      output.set(outputPaths.buildMetricsPath)
+
+      // TODO remove
+      buildGraphPath.set(outputPaths.buildGraphDotPath)
+      buildGraphModPath.set(outputPaths.buildModGraphDotPath)
+    }
+
     // A lifecycle task, always runs. Prints build health results to console
     tasks.register<BuildHealthTask>("buildHealth") {
-      this@register.adviceReport.set(adviceReport.flatMap { it.projectReport })
+      adviceReport.set(adviceReportTask.flatMap { it.projectReport })
       dependencyRenamingMap.set(getExtension().dependencyRenamingMap)
+      buildMetricsJson.set(measureBuildTask.flatMap { it.output })
     }
 
     // Prints ripples to console based on --id value
@@ -464,7 +475,7 @@ class DependencyAnalysisPlugin : Plugin<Project> {
       dependsOn(projGraphConf) // TODO do I need to depend on the configuration
       graphs = projGraphConf
 
-      buildHealthReport.set(adviceReport.flatMap { it.projectReport })
+      buildHealthReport.set(adviceReportTask.flatMap { it.projectReport })
       graph.set(graphTask.flatMap { it.outputFullGraphJson })
       output.set(outputPaths.ripplesPath)
     }

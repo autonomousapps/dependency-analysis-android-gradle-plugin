@@ -77,6 +77,7 @@ abstract class ProjectHealthTask : DefaultTask() {
     }
   }
 
+  // TODO dedup with BuildHealthTask
   private val metricsText by lazy {
     val origNodeCount = projMetrics.origGraph.nodeCount
     val origEdgeCount = projMetrics.origGraph.edgeCount

@@ -3,8 +3,10 @@ package com.autonomousapps.tasks
 import com.autonomousapps.TASK_GROUP_DEP_INTERNAL
 import com.autonomousapps.advice.ComprehensiveAdvice
 import com.autonomousapps.graph.DependencyGraph
+import com.autonomousapps.graph.GraphWriter
 import com.autonomousapps.internal.ProjectMetrics
 import com.autonomousapps.internal.utils.fromJson
+import com.autonomousapps.internal.utils.fromJsonList
 import com.autonomousapps.internal.utils.getAndDelete
 import com.autonomousapps.internal.utils.partitionOf
 import com.autonomousapps.internal.utils.toJson
@@ -18,23 +20,26 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 
 /**
- * Metrics at the subproject level.
+ * Metrics at the whole-build level.
  */
 @CacheableTask
-abstract class ProjectMetricsTask : DefaultTask() {
+abstract class BuildMetricsTask : DefaultTask() {
 
   init {
     group = TASK_GROUP_DEP_INTERNAL
-    description = "Calculates metrics for reporting by ${ProjectHealthTask::class.java.simpleName}"
+    description = "Calculates metrics for reporting by ${BuildHealthTask::class.java.simpleName}"
   }
 
+  /**
+   * A `List<ComprehensiveAdvice>`.
+   */
   @get:PathSensitive(PathSensitivity.NONE)
   @get:InputFile
-  abstract val comprehensiveAdvice: RegularFileProperty
+  abstract val adviceReport: RegularFileProperty
 
   @get:PathSensitive(PathSensitivity.NONE)
   @get:InputFile
-  abstract val graphJson: RegularFileProperty
+  abstract val fullGraphJson: RegularFileProperty
 
   @get:OutputFile
   abstract val output: RegularFileProperty
@@ -42,17 +47,17 @@ abstract class ProjectMetricsTask : DefaultTask() {
   // TODO remove these two output files
 
   @get:OutputFile
-  abstract val projGraphPath: RegularFileProperty
+  abstract val buildGraphPath: RegularFileProperty
 
   @get:OutputFile
-  abstract val projGraphModPath: RegularFileProperty
+  abstract val buildGraphModPath: RegularFileProperty
 
   private val origGraph by lazy {
-    graphJson.fromJson<DependencyGraph>()
+    fullGraphJson.fromJson<DependencyGraph>()
   }
 
   private val compAdvice by lazy {
-    comprehensiveAdvice.fromJson<ComprehensiveAdvice>()
+    adviceReport.fromJsonList<ComprehensiveAdvice>()
   }
 
   @TaskAction fun action() {
@@ -63,23 +68,35 @@ abstract class ProjectMetricsTask : DefaultTask() {
     )
 
     outputFile.writeText(metrics.toJson())
+
+    // TODO remove
+    val buildGraphFile = buildGraphPath.getAndDelete()
+    val buildModGraphFile = buildGraphModPath.getAndDelete()
+
+    buildGraphFile.writeText(GraphWriter.toDot(origGraph))
+    buildModGraphFile.writeText(GraphWriter.toDot(expectedResultGraph))
+
+    logger.quiet("Orig graph: ${buildGraphFile.absolutePath}")
+    logger.quiet("New graph: ${buildModGraphFile.absolutePath}")
   }
 
   private val expectedResultGraph by lazy {
     val result = origGraph.copy()
 
-    val (addAdvice, removeAdvice) = compAdvice.dependencyAdvice.partitionOf(
-      { it.isAdd() },
-      { it.isRemove() }
-    )
-
-    val projPath = compAdvice.projectPath
-    addAdvice.forEach {
-      result.addEdge(from = projPath, to = it.dependency.identifier)
+    compAdvice.forEach { projAdvice ->
+      val (addAdvice, removeAdvice) = projAdvice.dependencyAdvice.partitionOf(
+        { it.isAdd() },
+        { it.isRemove() }
+      )
+      val projPath = projAdvice.projectPath
+      addAdvice.forEach {
+        result.addEdge(from = projPath, to = it.dependency.identifier)
+      }
+      result.removeEdges(projPath, removeAdvice.map { removal ->
+        projPath to removal.dependency.identifier
+      })
     }
 
-    result.removeEdges(projPath, removeAdvice.map { removal ->
-      projPath to removal.dependency.identifier
-    })
+    result
   }
 }

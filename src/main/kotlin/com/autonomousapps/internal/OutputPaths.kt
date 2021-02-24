@@ -89,7 +89,7 @@ internal class NoVariantOutputPaths(private val project: Project) {
 
   val projMetricsPath = layout("$ROOT_DIR/proj-metrics.json")
 
-  // TODO temp
+  // TODO remove: temp
   val projGraphDotPath = layout("$ROOT_DIR/proj-graph.gv")
   val projModGraphDotPath = layout("$ROOT_DIR/proj-mod-graph.gv")
 
@@ -111,6 +111,11 @@ internal class RootOutputPaths(private val project: Project) {
   val projectGraphRevPath = layout("$ROOT_DIR/project-graph-rev.gv")
   val projectGraphRevSubPath = layout("$ROOT_DIR/project-graph-rev-sub.gv")
   val ripplesPath = layout("$ROOT_DIR/ripples.json")
+  val buildMetricsPath = layout("$ROOT_DIR/metrics.json")
+
+  // TODO remove: temp
+  val buildGraphDotPath = layout("$ROOT_DIR/build-graph.gv")
+  val buildModGraphDotPath = layout("$ROOT_DIR/build-mod-graph.gv")
 }
 
 internal class RedundantSubPluginOutputPaths(private val project: Project) {
