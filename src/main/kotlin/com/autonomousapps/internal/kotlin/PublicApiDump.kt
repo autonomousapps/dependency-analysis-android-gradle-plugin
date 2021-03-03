@@ -16,6 +16,7 @@ import kotlinx.metadata.jvm.JvmFieldSignature
 import kotlinx.metadata.jvm.JvmMethodSignature
 import java.io.File
 import java.io.InputStream
+import java.io.PrintStream
 import java.util.jar.JarFile
 
 fun main(args: Array<String>) {
@@ -154,7 +155,7 @@ internal fun List<ClassBinarySignature>.filterOutNonPublic(
   }
 }
 
-fun List<ClassBinarySignature>.dump() = dump(to = System.out)
+fun List<ClassBinarySignature>.dump(): PrintStream = dump(to = System.out)
 
 fun <T : Appendable> List<ClassBinarySignature>.dump(to: T): T = to.apply {
   this@dump.forEach {
