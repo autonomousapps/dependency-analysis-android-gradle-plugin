@@ -454,6 +454,9 @@ class DependencyAnalysisPlugin : Plugin<Project> {
     }
 
     val measureBuildTask = tasks.register<BuildMetricsTask>("measureBuild") {
+      dependsOn(projGraphConf) // TODO do I need to depend on the configuration
+      graphs = projGraphConf
+
       adviceReport.set(adviceReportTask.flatMap { it.projectReport })
       fullGraphJson.set(graphTask.flatMap { it.outputFullGraphJson })
       output.set(outputPaths.buildMetricsPath)

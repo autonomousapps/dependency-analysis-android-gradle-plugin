@@ -63,7 +63,7 @@ internal class DepthFirstOrder(
    * @return the preorder number of node `node`
    * @throws IllegalArgumentException unless `node` is in the graph.
    */
-  fun pre(node: String): Int = pre[node] ?: missingNode(node)
+  private fun pre(node: String): Int = pre[node] ?: missingNode(node)
 
   /**
    * Returns the postorder number of node `node`.
@@ -71,19 +71,19 @@ internal class DepthFirstOrder(
    * @return the postorder number of node `node`
    * @throws IllegalArgumentException unless `node` is in the graph
    */
-  fun post(node: String): Int = post[node] ?: missingNode(node)
+  private fun post(node: String): Int = post[node] ?: missingNode(node)
 
   /**
    * Returns the nodes in postorder.
    * @return the nodes in postorder, as an iterable of nodes
    */
-  fun post(): Iterable<String> = postorder
+  private fun post(): Iterable<String> = postorder
 
   /**
    * Returns the nodes in preorder.
    * @return the nodes in preorder, as an iterable of nodes
    */
-  fun pre(): Iterable<String> = preorder
+  private fun pre(): Iterable<String> = preorder
 
   /**
    * Returns the vertices in reverse postorder.

@@ -1,19 +1,36 @@
 package com.autonomousapps.graph
 
+import org.gradle.kotlin.dsl.support.appendReproducibleNewLine
+
 internal object GraphWriter {
 
   fun toDot(graph: DependencyGraph) = buildString {
-    append("strict digraph DependencyGraph {\n")
+    val projectNodes = graph.nodes().filter {
+      it.isProjectNode()
+    }.map { it.identifier }
+
+    appendReproducibleNewLine("strict digraph DependencyGraph {")
+    appendReproducibleNewLine("  ratio=0.6;")
+    appendReproducibleNewLine("  node [shape=box];")
+    projectNodes.forEach {
+      appendReproducibleNewLine("\n  \"$it\" [style=filled fillcolor=\"#008080\"];")
+    }
+
     graph.edges().forEach { edge ->
       val (from, to) = edge.nodeIds()
-      append("  \"$from\" -> \"$to\";")
+      val style =
+        if (from.isProjectNode() && to.isProjectNode()) " [style=bold color=\"#FF6347\" weight=8]"
+        else ""
+      append("  \"$from\" -> \"$to\"$style;")
       append("\n")
     }
     append("}")
   }
 
   fun toDot(path: Iterable<Edge>) = buildString {
-    append("strict digraph DependencyGraph {\n")
+    appendReproducibleNewLine("strict digraph DependencyGraph {")
+    appendReproducibleNewLine("  ratio=0.6;")
+    appendReproducibleNewLine("  node [shape=box];")
     path.forEach { edge ->
       val (from, to) = edge.nodeIds()
       append("  \"$from\" -> \"$to\";")
@@ -27,9 +44,11 @@ internal object GraphWriter {
       it.nodeIds().toList()
     }
 
-    append("strict digraph DependencyGraph {\n")
+    appendReproducibleNewLine("strict digraph DependencyGraph {")
+    appendReproducibleNewLine("  ratio=0.6;")
+    appendReproducibleNewLine("  node [shape=box];")
     importantNodes.forEach {
-      append("\n  \"$it\" [style=filled fillcolor=\"#008080\"];\n")
+      appendReproducibleNewLine("\n  \"$it\" [style=filled fillcolor=\"#008080\"];")
     }
     append("\n")
 
@@ -44,4 +63,8 @@ internal object GraphWriter {
     }
     append("}")
   }
+
+  // TODO these should probably be instance function on `Node`
+  private fun Node.isProjectNode() = identifier.isProjectNode()
+  private fun String.isProjectNode() = startsWith(":")
 }

@@ -4,6 +4,7 @@ import com.autonomousapps.TASK_GROUP_DEP_INTERNAL
 import com.autonomousapps.advice.ComprehensiveAdvice
 import com.autonomousapps.graph.DependencyGraph
 import com.autonomousapps.graph.GraphWriter
+import com.autonomousapps.graph.merge
 import com.autonomousapps.internal.ProjectMetrics
 import com.autonomousapps.internal.utils.fromJson
 import com.autonomousapps.internal.utils.fromJsonList
@@ -11,13 +12,11 @@ import com.autonomousapps.internal.utils.getAndDelete
 import com.autonomousapps.internal.utils.partitionOf
 import com.autonomousapps.internal.utils.toJson
 import org.gradle.api.DefaultTask
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.tasks.CacheableTask
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.OutputFile
-import org.gradle.api.tasks.PathSensitive
-import org.gradle.api.tasks.PathSensitivity
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
+import java.io.File
 
 /**
  * Metrics at the whole-build level.
@@ -29,6 +28,10 @@ abstract class BuildMetricsTask : DefaultTask() {
     group = TASK_GROUP_DEP_INTERNAL
     description = "Calculates metrics for reporting by ${BuildHealthTask::class.java.simpleName}"
   }
+
+  @get:PathSensitive(PathSensitivity.RELATIVE)
+  @get:InputFiles
+  lateinit var graphs: Configuration
 
   /**
    * A `List<ComprehensiveAdvice>`.
@@ -80,23 +83,35 @@ abstract class BuildMetricsTask : DefaultTask() {
     logger.quiet("New graph: ${buildModGraphFile.absolutePath}")
   }
 
-  private val expectedResultGraph by lazy {
-    val result = origGraph.copy()
+  private val projectGraphs: Map<String, File> by lazy {
+    // TODO this code is duplicated elsewhere
+    // a map of project-path to DependencyGraph JSON file
+    graphs.dependencies
+      .filterIsInstance<ProjectDependency>()
+      .mapNotNull { dep ->
+        graphs.fileCollection(dep)
+          .filter { it.exists() }
+          .singleOrNull()
+          ?.let { file -> dep.dependencyProject.path to file }
+      }.toMap()
+  }
 
-    compAdvice.forEach { projAdvice ->
+  private val expectedResultGraph by lazy {
+    compAdvice.mapNotNull { projAdvice ->
+      val projPath = projAdvice.projectPath
+      val projectGraph = projectGraphs[projPath]?.fromJson<DependencyGraph>() ?: return@mapNotNull null
+
       val (addAdvice, removeAdvice) = projAdvice.dependencyAdvice.partitionOf(
         { it.isAdd() },
         { it.isRemove() }
       )
-      val projPath = projAdvice.projectPath
       addAdvice.forEach {
-        result.addEdge(from = projPath, to = it.dependency.identifier)
+        projectGraph.addEdge(from = projPath, to = it.dependency.identifier)
       }
-      result.removeEdges(projPath, removeAdvice.map { removal ->
+
+      projectGraph.removeEdges(projPath, removeAdvice.map { removal ->
         projPath to removal.dependency.identifier
       })
-    }
-
-    result
+    }.merge()
   }
 }
