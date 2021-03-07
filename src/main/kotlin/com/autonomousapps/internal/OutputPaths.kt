@@ -20,7 +20,8 @@ internal class OutputPaths(private val project: Project, variantName: String) {
   val allUsedClassesPath = layout("${intermediatesDir}/all-used-classes.json")
   val allUsedClassesPrettyPath = layout("${intermediatesDir}/all-used-classes-pretty.json")
   val allDeclaredDepsPath = layout("${intermediatesDir}/all-declared-dependencies.json")
-  val allDeclaredDepsPrettyPath = layout("${intermediatesDir}/all-declared-dependencies-pretty.json")
+  val allDeclaredDepsPrettyPath =
+    layout("${intermediatesDir}/all-declared-dependencies-pretty.json")
   val importsPath = layout("${intermediatesDir}/imports.json")
   val inlineUsagePath = layout("${intermediatesDir}/inline-usage.json")
   val constantUsagePath = layout("${intermediatesDir}/constant-usage.json")
@@ -30,7 +31,8 @@ internal class OutputPaths(private val project: Project, variantName: String) {
   val manifestPackagesPath = layout("${intermediatesDir}/manifest-packages.json")
   val allComponentsPath = layout("${intermediatesDir}/all-components-with-transitives.json")
   val unusedComponentsPath = layout("${intermediatesDir}/unused-components-with-transitives.json")
-  val usedTransitiveDependenciesPath = layout("${intermediatesDir}/used-transitive-dependencies.json")
+  val usedTransitiveDependenciesPath =
+    layout("${intermediatesDir}/used-transitive-dependencies.json")
   val usedVariantDependenciesPath = layout("${intermediatesDir}/used-variant-dependencies.json")
   val serviceLoaderDependenciesPath = layout("${intermediatesDir}/service-loaders.json")
   val nativeDependenciesPath = layout("${intermediatesDir}/native-libs.json")
@@ -106,16 +108,17 @@ internal class RootOutputPaths(private val project: Project) {
 
   val adviceAggregatePath = layout("$ROOT_DIR/advice-holistic.json")
   val adviceAggregatePrettyPath = layout("$ROOT_DIR/advice-holistic-pretty.json")
-  val fullGraphPath = layout("$ROOT_DIR/full-graph.json")
-  val projectGraphPath = layout("$ROOT_DIR/project-graph.gv")
-  val projectGraphRevPath = layout("$ROOT_DIR/project-graph-rev.gv")
-  val projectGraphRevSubPath = layout("$ROOT_DIR/project-graph-rev-sub.gv")
-  val ripplesPath = layout("$ROOT_DIR/ripples.json")
-  val buildMetricsPath = layout("$ROOT_DIR/metrics.json")
 
-  // TODO remove: temp
-  val buildGraphDotPath = layout("$ROOT_DIR/build-graph.gv")
-  val buildModGraphDotPath = layout("$ROOT_DIR/build-mod-graph.gv")
+  /* Graph paths. */
+
+  val mergedGraphJsonPath = layout("$ROOT_DIR/merged-graph.json")
+  val mergedGraphDotPath = layout("$ROOT_DIR/merged-graph.gv")
+  val mergedGraphRevDotPath = layout("$ROOT_DIR/merged-graph-rev.gv")
+  val mergedGraphRevSubDotPath = layout("$ROOT_DIR/merged-graph-rev-sub.gv")
+  val mergedGraphModDotPath = layout("$ROOT_DIR/merged-mod-graph.gv")
+
+  val buildMetricsPath = layout("$ROOT_DIR/metrics.json")
+  val ripplesPath = layout("$ROOT_DIR/ripples.json")
 }
 
 internal class RedundantSubPluginOutputPaths(private val project: Project) {
@@ -132,14 +135,18 @@ internal class RedundantSubPluginOutputPaths(private val project: Project) {
 
 // TODO used by tests
 fun getVariantDirectory(variantName: String) = "$ROOT_DIR/$variantName"
-fun getAllUsedClassesPath(variantName: String) = "${getVariantDirectory(variantName)}/intermediates/all-used-classes.json"
+fun getAllUsedClassesPath(variantName: String) =
+  "${getVariantDirectory(variantName)}/intermediates/all-used-classes.json"
 
-fun getUnusedDirectDependenciesPath(variantName: String) = "${getVariantDirectory(variantName)}/intermediates/unused-components-with-transitives.json"
+fun getUnusedDirectDependenciesPath(variantName: String) =
+  "${getVariantDirectory(variantName)}/intermediates/unused-components-with-transitives.json"
 
-fun getAbiAnalysisPath(variantName: String) = "${getVariantDirectory(variantName)}/intermediates/abi.json"
+fun getAbiAnalysisPath(variantName: String) =
+  "${getVariantDirectory(variantName)}/intermediates/abi.json"
 
 fun getAdvicePath(variantName: String) = "${getVariantDirectory(variantName)}/advice.json"
-fun getAdviceConsolePath(variantName: String) = "${getVariantDirectory(variantName)}/advice-console.txt"
+fun getAdviceConsolePath(variantName: String) =
+  "${getVariantDirectory(variantName)}/advice-console.txt"
 
 fun getAdviceAggregatePath() = "$ROOT_DIR/advice-holistic.json"
 fun getRipplesPath() = "$ROOT_DIR/ripples.json"

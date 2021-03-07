@@ -6,14 +6,10 @@ import com.autonomousapps.graph.DependencyGraph
 import com.autonomousapps.graph.GraphWriter
 import com.autonomousapps.graph.merge
 import com.autonomousapps.internal.ProjectMetrics
-import com.autonomousapps.internal.utils.fromJson
-import com.autonomousapps.internal.utils.fromJsonList
-import com.autonomousapps.internal.utils.getAndDelete
-import com.autonomousapps.internal.utils.partitionOf
-import com.autonomousapps.internal.utils.toJson
+import com.autonomousapps.internal.graph.projectGraphMapFrom
+import com.autonomousapps.internal.utils.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.*
 import java.io.File
@@ -47,13 +43,8 @@ abstract class BuildMetricsTask : DefaultTask() {
   @get:OutputFile
   abstract val output: RegularFileProperty
 
-  // TODO remove these two output files
-
   @get:OutputFile
-  abstract val buildGraphPath: RegularFileProperty
-
-  @get:OutputFile
-  abstract val buildGraphModPath: RegularFileProperty
+  abstract val mergedGraphModPath: RegularFileProperty
 
   private val origGraph by lazy {
     fullGraphJson.fromJson<DependencyGraph>()
@@ -65,41 +56,27 @@ abstract class BuildMetricsTask : DefaultTask() {
 
   @TaskAction fun action() {
     val outputFile = output.getAndDelete()
+    val mergedGraphModFile = mergedGraphModPath.getAndDelete()
 
     val metrics = ProjectMetrics.fromGraphs(
       origGraph = origGraph, expectedResultGraph = expectedResultGraph
     )
 
     outputFile.writeText(metrics.toJson())
+    mergedGraphModFile.writeText(GraphWriter.toDot(expectedResultGraph))
 
-    // TODO remove
-    val buildGraphFile = buildGraphPath.getAndDelete()
-    val buildModGraphFile = buildGraphModPath.getAndDelete()
-
-    buildGraphFile.writeText(GraphWriter.toDot(origGraph))
-    buildModGraphFile.writeText(GraphWriter.toDot(expectedResultGraph))
-
-    logger.quiet("Orig graph: ${buildGraphFile.absolutePath}")
-    logger.quiet("New graph: ${buildModGraphFile.absolutePath}")
+    logger.quiet("Modified graph: ${mergedGraphModFile.absolutePath}")
   }
 
   private val projectGraphs: Map<String, File> by lazy {
-    // TODO this code is duplicated elsewhere
-    // a map of project-path to DependencyGraph JSON file
-    graphs.dependencies
-      .filterIsInstance<ProjectDependency>()
-      .mapNotNull { dep ->
-        graphs.fileCollection(dep)
-          .filter { it.exists() }
-          .singleOrNull()
-          ?.let { file -> dep.dependencyProject.path to file }
-      }.toMap()
+    projectGraphMapFrom(graphs)
   }
 
   private val expectedResultGraph by lazy {
     compAdvice.mapNotNull { projAdvice ->
       val projPath = projAdvice.projectPath
-      val projectGraph = projectGraphs[projPath]?.fromJson<DependencyGraph>() ?: return@mapNotNull null
+      val projectGraph =
+        projectGraphs[projPath]?.fromJson<DependencyGraph>() ?: return@mapNotNull null
 
       val (addAdvice, removeAdvice) = projAdvice.dependencyAdvice.partitionOf(
         { it.isAdd() },

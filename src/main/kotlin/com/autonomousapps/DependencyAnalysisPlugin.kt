@@ -447,10 +447,10 @@ class DependencyAnalysisPlugin : Plugin<Project> {
       dependsOn(projGraphConf) // TODO do I need to depend on the configuration
       graphs = projGraphConf
 
-      outputFullGraphJson.set(outputPaths.fullGraphPath)
-      outputFullGraphDot.set(outputPaths.projectGraphPath)
-      outputRevGraphDot.set(outputPaths.projectGraphRevPath)
-      outputRevSubGraphDot.set(outputPaths.projectGraphRevSubPath)
+      outputFullGraphJson.set(outputPaths.mergedGraphJsonPath)
+      outputFullGraphDot.set(outputPaths.mergedGraphDotPath)
+      outputRevGraphDot.set(outputPaths.mergedGraphRevDotPath)
+      outputRevSubGraphDot.set(outputPaths.mergedGraphRevSubDotPath)
     }
 
     val measureBuildTask = tasks.register<BuildMetricsTask>("measureBuild") {
@@ -460,10 +460,7 @@ class DependencyAnalysisPlugin : Plugin<Project> {
       adviceReport.set(adviceReportTask.flatMap { it.projectReport })
       fullGraphJson.set(graphTask.flatMap { it.outputFullGraphJson })
       output.set(outputPaths.buildMetricsPath)
-
-      // TODO remove
-      buildGraphPath.set(outputPaths.buildGraphDotPath)
-      buildGraphModPath.set(outputPaths.buildModGraphDotPath)
+      mergedGraphModPath.set(outputPaths.mergedGraphModDotPath)
     }
 
     // A lifecycle task, always runs. Prints build health results to console

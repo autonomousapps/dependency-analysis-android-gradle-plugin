@@ -1,14 +1,16 @@
 package com.autonomousapps.tasks
 
 import com.autonomousapps.TASK_GROUP_DEP
-import com.autonomousapps.graph.*
-import com.autonomousapps.internal.utils.fromJson
+import com.autonomousapps.graph.DepthFirstSearch
+import com.autonomousapps.graph.GraphWriter
+import com.autonomousapps.graph.Node
+import com.autonomousapps.graph.ProducerNode
+import com.autonomousapps.internal.graph.mergedGraphFrom
 import com.autonomousapps.internal.utils.getAndDelete
 import com.autonomousapps.internal.utils.toJson
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.options.Option
@@ -28,7 +30,10 @@ abstract class DependencyGraphAllProjects : DefaultTask() {
 
   private var query: String = ""
 
-  @Option(option = "id", description = "The project dependency for which to generate a reverse graph")
+  @Option(
+    option = "id",
+    description = "The project dependency for which to generate a reverse graph"
+  )
   fun query(identifier: String) {
     this.query = identifier
   }
@@ -55,28 +60,21 @@ abstract class DependencyGraphAllProjects : DefaultTask() {
     val outputRevFile = outputRevGraphDot.getAndDelete()
     val outputRevSubFile = outputRevSubGraphDot.getAndDelete()
 
-    val graph = graphs.dependencies
-      .filterIsInstance<ProjectDependency>()
-      .flatMap { dep ->
-        graphs.fileCollection(dep)
-          .filter { it.exists() }
-          .map { it.fromJson<DependencyGraph>() }
-      }.merge()
+    val mergedGraph = mergedGraphFrom(graphs)
+    val mergedReversedGraph = mergedGraph.reversed()
 
-    val reversed = graph.reversed()
-
-    outputFullGraphJsonFile.writeText(graph.toJson())
+    outputFullGraphJsonFile.writeText(mergedGraph.toJson())
 
     // TODO need to run graphviz automatically
     logger.debug("Graph DOT at ${outputFile.path}")
-    outputFile.writeText(GraphWriter.toDot(graph))
+    outputFile.writeText(GraphWriter.toDot(mergedGraph))
 
     logger.debug("Graph rev DOT at ${outputRevFile.path}")
-    outputRevFile.writeText(GraphWriter.toDot(reversed))
+    outputRevFile.writeText(GraphWriter.toDot(mergedReversedGraph))
 
     if (query.isNotEmpty()) {
       val node = getQueryNode()
-      val subgraph = DepthFirstSearch(reversed, node).subgraph
+      val subgraph = DepthFirstSearch(mergedReversedGraph, node).subgraph
 
       logger.quiet("Subgraph rooted on $query at ${outputRevSubFile.path}")
       outputRevSubFile.writeText(GraphWriter.toDot(subgraph))
