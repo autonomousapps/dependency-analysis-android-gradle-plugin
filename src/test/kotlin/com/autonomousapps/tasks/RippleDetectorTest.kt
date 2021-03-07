@@ -1,9 +1,12 @@
 package com.autonomousapps.tasks
 
-import com.autonomousapps.advice.*
 import com.autonomousapps.advice.Pebble.Ripple
+import com.autonomousapps.advice.RippleDetector
 import com.autonomousapps.graph.DependencyGraph
-import com.autonomousapps.internal.utils.mapToSet
+import com.autonomousapps.test.addAdvice
+import com.autonomousapps.test.changeAdvice
+import com.autonomousapps.test.compAdviceFor
+import com.autonomousapps.test.graphFrom
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
@@ -306,43 +309,5 @@ class RippleDetectorTest {
 
     // Then
     assertThat(actual.ripples).containsExactlyElementsIn(expected)
-  }
-
-  @Suppress("SameParameterValue")
-  private fun addAdvice(trans: String, toConfiguration: String, vararg parents: String) =
-    Advice.ofAdd(
-      transitiveDependency = TransitiveDependency(
-        dependency = Dependency(identifier = trans),
-        parents = parents.toSet().mapToSet { Dependency(identifier = it) }
-      ),
-      toConfiguration = toConfiguration
-    )
-
-  @Suppress("SameParameterValue")
-  private fun changeAdvice(id: String, fromConfiguration: String, toConfiguration: String) =
-    Advice.ofChange(
-      hasDependency = Dependency(
-        identifier = id,
-        configurationName = fromConfiguration
-      ),
-      toConfiguration = toConfiguration
-    )
-
-  private fun compAdviceFor(project: String, vararg advice: Advice) = ComprehensiveAdvice(
-    projectPath = project, dependencyAdvice = advice.toSet(),
-    pluginAdvice = emptySet(), shouldFail = false
-  )
-
-  private fun graphFrom(vararg edges: String): DependencyGraph {
-    val edgeList = edges.toList()
-    if (edgeList.size % 2 != 0) {
-      throw IllegalArgumentException("Must pass in an even number of edges. Was ${edgeList.size}.")
-    }
-
-    return DependencyGraph().apply {
-      for (i in edgeList.indices step 2) {
-        addEdge(edgeList[i], edgeList[i + 1])
-      }
-    }
   }
 }

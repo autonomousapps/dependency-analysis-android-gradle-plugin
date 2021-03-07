@@ -7,6 +7,7 @@ internal class DependencyGraph {
   private val nodes = LinkedHashMap<String, Node>()
   private val inDegree = LinkedHashMap<String, Int>()
 
+
   companion object {
     fun newGraph(edges: Iterable<Edge>): DependencyGraph {
       val graph = DependencyGraph()

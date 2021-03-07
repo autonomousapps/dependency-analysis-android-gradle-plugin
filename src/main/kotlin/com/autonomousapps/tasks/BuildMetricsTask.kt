@@ -4,10 +4,13 @@ import com.autonomousapps.TASK_GROUP_DEP_INTERNAL
 import com.autonomousapps.advice.ComprehensiveAdvice
 import com.autonomousapps.graph.DependencyGraph
 import com.autonomousapps.graph.GraphWriter
-import com.autonomousapps.graph.merge
 import com.autonomousapps.internal.ProjectMetrics
+import com.autonomousapps.internal.graph.GraphTrimmer
 import com.autonomousapps.internal.graph.projectGraphMapFrom
-import com.autonomousapps.internal.utils.*
+import com.autonomousapps.internal.utils.fromJson
+import com.autonomousapps.internal.utils.fromJsonList
+import com.autonomousapps.internal.utils.getAndDelete
+import com.autonomousapps.internal.utils.toJson
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.RegularFileProperty
@@ -72,23 +75,26 @@ abstract class BuildMetricsTask : DefaultTask() {
     projectGraphMapFrom(graphs)
   }
 
-  private val expectedResultGraph by lazy {
-    compAdvice.mapNotNull { projAdvice ->
-      val projPath = projAdvice.projectPath
-      val projectGraph =
-        projectGraphs[projPath]?.fromJson<DependencyGraph>() ?: return@mapNotNull null
-
-      val (addAdvice, removeAdvice) = projAdvice.dependencyAdvice.partitionOf(
-        { it.isAdd() },
-        { it.isRemove() }
-      )
-      addAdvice.forEach {
-        projectGraph.addEdge(from = projPath, to = it.dependency.identifier)
-      }
-
-      projectGraph.removeEdges(projPath, removeAdvice.map { removal ->
-        projPath to removal.dependency.identifier
-      })
-    }.merge()
+  private val expectedResultGraph: DependencyGraph by lazy {
+    GraphTrimmer(compAdvice) { path ->
+      projectGraphs[path]?.fromJson()
+    }.trimmedGraph
+//    compAdvice.mapNotNull { projAdvice ->
+//      val projPath = projAdvice.projectPath
+//      val projectGraph = projectGraphs[projPath]?.fromJson<DependencyGraph>()
+//        ?: return@mapNotNull null
+//
+//      val (addAdvice, removeAdvice) = projAdvice.dependencyAdvice.partitionOf(
+//        { it.isAdd() },
+//        { it.isRemove() }
+//      )
+//      addAdvice.forEach {
+//        projectGraph.addEdge(from = projPath, to = it.dependency.identifier)
+//      }
+//
+//      projectGraph.removeEdges(projPath, removeAdvice.map { removal ->
+//        projPath to removal.dependency.identifier
+//      })
+//    }.merge()
   }
 }
