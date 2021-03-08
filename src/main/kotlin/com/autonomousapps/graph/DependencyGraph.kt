@@ -1,9 +1,10 @@
 package com.autonomousapps.graph
 
 import com.autonomousapps.internal.utils.toSortedList
-import java.util.*
-import kotlin.collections.LinkedHashMap
 
+// We deliberately do not override hashCode() because this class should never be used as a key in
+// a hash set or map.
+@Suppress("EqualsOrHashCode")
 internal class DependencyGraph {
 
   /* Primary properties. */
@@ -168,27 +169,18 @@ internal class DependencyGraph {
 
     other as DependencyGraph
 
-    if (nodes.size != other.nodes.size) return false
-    if (adj.size != other.adj.size) return false
+    val theseEdges = edges()
+    val thoseEdges = other.edges()
+    if (theseEdges.size != thoseEdges.size) return false
 
-    for ((id, node) in nodes) {
-      if (other.nodes[id] != node) return false
-    }
-    for ((id, edges) in adj) {
-      val otherEdges = other.adj[id]?.toSortedList() ?: emptyList()
-      if (otherEdges.size != edges.size) return false
-
-      val sortedEdges = edges.toSortedList()
-      for (i in sortedEdges.indices) {
-        if (sortedEdges[i] != otherEdges[i]) return false
-      }
+    val theseSortedEdges = theseEdges.toSortedList()
+    val thoseSortedEdges = thoseEdges.toSortedList()
+    for (i in theseSortedEdges.indices) {
+      if (theseSortedEdges[i] != thoseSortedEdges[i]) return false
     }
 
     return true
   }
-
-  // We deliberately do not override hashCode() because this class should never be used as a key in
-  // a hash set or map.
 }
 
 internal fun missingNode(node: Node): Nothing = missingNode(node.identifier)
