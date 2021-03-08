@@ -1,12 +1,20 @@
 package com.autonomousapps.graph
 
+import com.autonomousapps.internal.utils.toSortedList
+import java.util.*
+import kotlin.collections.LinkedHashMap
+
 internal class DependencyGraph {
 
-  private var edgeCount = 0
+  /* Primary properties. */
+
   private val adj = LinkedHashMap<String, MutableSet<Edge>>()
   private val nodes = LinkedHashMap<String, Node>()
-  private val inDegree = LinkedHashMap<String, Int>()
 
+  /* Derived properties. */
+
+  private val inDegree = LinkedHashMap<String, Int>()
+  private var edgeCount = 0
 
   companion object {
     fun newGraph(edges: Iterable<Edge>): DependencyGraph {
@@ -16,10 +24,6 @@ internal class DependencyGraph {
       }
       return graph
     }
-  }
-
-  fun copy(): DependencyGraph {
-    return newGraph(edges())
   }
 
   fun addEdge(from: String, to: String) {
@@ -106,6 +110,10 @@ internal class DependencyGraph {
    * The functions below all return a new graph.
    */
 
+  fun copy(): DependencyGraph {
+    return newGraph(edges())
+  }
+
   fun reversed(): DependencyGraph {
     val reversed = DependencyGraph()
     adj.forEach { (node, edges) ->
@@ -149,6 +157,38 @@ internal class DependencyGraph {
     // removed
     return graph.subgraph(root)
   }
+
+  override fun toString(): String {
+    return edges().joinToString(separator = "\n")
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as DependencyGraph
+
+    if (nodes.size != other.nodes.size) return false
+    if (adj.size != other.adj.size) return false
+
+    for ((id, node) in nodes) {
+      if (other.nodes[id] != node) return false
+    }
+    for ((id, edges) in adj) {
+      val otherEdges = other.adj[id]?.toSortedList() ?: emptyList()
+      if (otherEdges.size != edges.size) return false
+
+      val sortedEdges = edges.toSortedList()
+      for (i in sortedEdges.indices) {
+        if (sortedEdges[i] != otherEdges[i]) return false
+      }
+    }
+
+    return true
+  }
+
+  // We deliberately do not override hashCode() because this class should never be used as a key in
+  // a hash set or map.
 }
 
 internal fun missingNode(node: Node): Nothing = missingNode(node.identifier)

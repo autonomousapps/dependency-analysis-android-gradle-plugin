@@ -10,7 +10,7 @@ import org.gradle.kotlin.dsl.support.appendReproducibleNewLine
  */
 internal sealed class Node(
   open val identifier: String
-) {
+) : Comparable<Node> {
 
   override fun toString(): String = identifier
 
@@ -28,6 +28,8 @@ internal sealed class Node(
   override fun hashCode(): Int {
     return identifier.hashCode()
   }
+
+  override fun compareTo(other: Node): Int = identifier.compareTo(other.identifier)
 }
 
 internal data class BareNode(override val identifier: String) : Node(identifier)

@@ -198,3 +198,7 @@ internal fun <T, U> List<Pair<T, MutableSet<U>>>.mergedMap(): Map<T, Set<U>> {
     }
   }
 }
+
+internal fun <T : Comparable<T>> Iterable<T>.toSortedList(): List<T> {
+  return toSortedSet().toList()
+}

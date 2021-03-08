@@ -52,7 +52,7 @@ class GraphTrimmerTest {
     // When
     val actual = GraphTrimmer(buildHealth) { origGraph.subgraph(it) }.trimmedGraph
 
-    // Then TODO need equals method for DependencyGraph
+    // Then
     assertThat(actual).isEqualTo(expectedGraph)
   }
 }
