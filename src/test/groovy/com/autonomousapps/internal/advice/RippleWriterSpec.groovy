@@ -9,7 +9,7 @@ import spock.lang.Specification
 
 import static com.google.common.truth.Truth.assertThat
 
-class RippleWriterTest extends Specification {
+class RippleWriterSpec extends Specification {
 
   def "no ripples"() {
     given:

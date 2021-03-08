@@ -2,9 +2,6 @@ package com.autonomousapps.graph
 
 import com.autonomousapps.internal.utils.toSortedList
 
-// We deliberately do not override hashCode() because this class should never be used as a key in
-// a hash set or map.
-@Suppress("EqualsOrHashCode")
 internal class DependencyGraph {
 
   /* Primary properties. */
@@ -163,23 +160,27 @@ internal class DependencyGraph {
     return edges().joinToString(separator = "\n")
   }
 
+  /*
+   * equals() and hashCode() care only about the graph's edges and nodes. Everything else is a
+   * derived property. It's important to check both because a graph may contain orphaned nodes.
+   */
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
     other as DependencyGraph
 
-    val theseEdges = edges()
-    val thoseEdges = other.edges()
-    if (theseEdges.size != thoseEdges.size) return false
-
-    val theseSortedEdges = theseEdges.toSortedList()
-    val thoseSortedEdges = thoseEdges.toSortedList()
-    for (i in theseSortedEdges.indices) {
-      if (theseSortedEdges[i] != thoseSortedEdges[i]) return false
-    }
+    if (edges().toSortedList() != other.edges().toSortedList()) return false
+    if (nodes.keys.sorted() != other.nodes.keys.sorted()) return false
 
     return true
+  }
+
+  override fun hashCode(): Int {
+    var result = edges().hashCode()
+    result = 31 * result + nodes.keys.hashCode()
+    return result
   }
 }
 

@@ -11,7 +11,8 @@ class GraphTrimmerTest {
 
   @Test fun test() {
     // Given
-    val origGraph = graphFrom(
+    val appGraph = graphFrom(":app", ":lib")
+    val libGraph = graphFrom(
       ":lib", "kotlin-stdlib-jdk8",
       ":lib", "moshi-kotlin",
       ":lib", "moshi-adapters",
@@ -29,6 +30,7 @@ class GraphTrimmerTest {
       "okhttp", "okio"
     )
     val expectedGraph = graphFrom(
+      ":app", ":lib",
       ":lib", "kotlin-stdlib-jdk8",
       ":lib", "okio",
       "kotlin-stdlib-jdk8", "kotlin-stdlib-jdk7",
@@ -46,11 +48,18 @@ class GraphTrimmerTest {
     val removeAdviceForLib1 = removeAdvice("moshi-kotlin", "implementation")
     val removeAdviceForLib2 = removeAdvice("moshi-adapters", "implementation")
     val buildHealth = listOf(
+      compAdviceFor(":app"),
       compAdviceFor(":lib", addAdviceForLib, removeAdviceForLib1, removeAdviceForLib2)
     )
 
     // When
-    val actual = GraphTrimmer(buildHealth) { origGraph.subgraph(it) }.trimmedGraph
+    val actual = GraphTrimmer(buildHealth) {
+      when (it) {
+        ":app" -> appGraph
+        ":lib" -> libGraph
+        else -> throw IllegalArgumentException("Unexpected test project: $it")
+      }
+    }.trimmedGraph
 
     // Then
     assertThat(actual).isEqualTo(expectedGraph)
