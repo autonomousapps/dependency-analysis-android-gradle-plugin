@@ -7,6 +7,7 @@ import com.autonomousapps.advice.ComprehensiveAdvice
 import com.autonomousapps.internal.ConsoleReport
 import com.autonomousapps.internal.ProjectMetrics
 import com.autonomousapps.internal.advice.AdvicePrinter
+import com.autonomousapps.internal.getMetricsText
 import com.autonomousapps.internal.utils.fromJson
 import com.autonomousapps.internal.utils.log
 import com.autonomousapps.shouldFail
@@ -77,14 +78,7 @@ abstract class ProjectHealthTask : DefaultTask() {
     }
   }
 
-  // TODO dedup with BuildHealthTask
   private val metricsText by lazy {
-    val origNodeCount = projMetrics.origGraph.nodeCount
-    val origEdgeCount = projMetrics.origGraph.edgeCount
-    val newNodeCount = projMetrics.newGraph.nodeCount
-    val newEdgeCount = projMetrics.newGraph.edgeCount
-
-    "Current graph has $origNodeCount nodes and $origEdgeCount edges. If you follow all of this" +
-      " advice, the new graph will have $newNodeCount nodes and $newEdgeCount edges.\n"
+    getMetricsText(projMetrics)
   }
 }

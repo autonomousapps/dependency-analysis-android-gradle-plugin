@@ -893,7 +893,7 @@ class DependencyAnalysisPlugin : Plugin<Project> {
 
       // TODO remove
       projGraphPath.set(paths.projGraphDotPath)
-      projGraphModPath.set(paths.projModGraphDotPath)
+      projGraphModPath.set(paths.projGraphModDotPath)
     }
 
     // This task is a sort of alias for "aggregateAdvice" that will fail the build if that task

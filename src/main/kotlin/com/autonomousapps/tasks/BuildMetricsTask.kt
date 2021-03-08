@@ -72,7 +72,7 @@ abstract class BuildMetricsTask : DefaultTask() {
 
   private val expectedResultGraph: DependencyGraph by lazy {
     GraphTrimmer(
-      comprehensiveAdvice = compAdvice,
+      buildHealth = compAdvice,
       projectGraphProvider = this::getDependencyGraph
     ).trimmedGraph
   }

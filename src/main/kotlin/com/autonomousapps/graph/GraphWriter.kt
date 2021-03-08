@@ -64,7 +64,6 @@ internal object GraphWriter {
     append("}")
   }
 
-  // TODO these should probably be instance function on `Node`
   private fun Node.isProjectNode() = identifier.isProjectNode()
   private fun String.isProjectNode() = startsWith(":")
 }

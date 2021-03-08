@@ -93,7 +93,7 @@ internal class NoVariantOutputPaths(private val project: Project) {
 
   // TODO remove: temp
   val projGraphDotPath = layout("$ROOT_DIR/proj-graph.gv")
-  val projModGraphDotPath = layout("$ROOT_DIR/proj-mod-graph.gv")
+  val projGraphModDotPath = layout("$ROOT_DIR/proj-mod-graph.gv")
 
   @Suppress("SameParameterValue")
   private fun layout(path: String) = project.layout.buildDirectory.file(path)

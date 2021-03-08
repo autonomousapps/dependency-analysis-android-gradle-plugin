@@ -7,6 +7,7 @@ import com.autonomousapps.advice.ComprehensiveAdvice
 import com.autonomousapps.internal.ConsoleReport
 import com.autonomousapps.internal.ProjectMetrics
 import com.autonomousapps.internal.advice.AdvicePrinter
+import com.autonomousapps.internal.getMetricsText
 import com.autonomousapps.internal.utils.fromJson
 import com.autonomousapps.internal.utils.fromJsonList
 import com.autonomousapps.shouldFail
@@ -15,7 +16,11 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.MapProperty
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
+import org.gradle.api.tasks.TaskAction
 import org.gradle.kotlin.dsl.support.appendReproducibleNewLine
 
 abstract class BuildHealthTask : DefaultTask() {
@@ -89,14 +94,7 @@ abstract class BuildHealthTask : DefaultTask() {
     if (projectPath == ":") "Advice for root project"
     else "Advice for project $projectPath"
 
-  // TODO dedup with ProjectHealthTask
   private val metricsText by lazy {
-    val origNodeCount = buildMetrics.origGraph.nodeCount
-    val origEdgeCount = buildMetrics.origGraph.edgeCount
-    val newNodeCount = buildMetrics.newGraph.nodeCount
-    val newEdgeCount = buildMetrics.newGraph.edgeCount
-
-    "Current graph has $origNodeCount nodes and $origEdgeCount edges. If you follow all of this" +
-      " advice, the new graph will have $newNodeCount nodes and $newEdgeCount edges.\n"
+    getMetricsText(buildMetrics)
   }
 }
