@@ -6,6 +6,7 @@ import com.autonomousapps.graph.DependencyGraph
 import com.autonomousapps.graph.GraphWriter
 import com.autonomousapps.internal.ProjectMetrics
 import com.autonomousapps.internal.graph.GraphTrimmer
+import com.autonomousapps.internal.graph.LazyDependencyGraph
 import com.autonomousapps.internal.graph.projectGraphMapFrom
 import com.autonomousapps.internal.utils.fromJson
 import com.autonomousapps.internal.utils.fromJsonList
@@ -14,7 +15,13 @@ import com.autonomousapps.internal.utils.toJson
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
+import org.gradle.api.tasks.TaskAction
 import java.io.File
 
 /**
@@ -57,6 +64,19 @@ abstract class BuildMetricsTask : DefaultTask() {
     adviceReport.fromJsonList<ComprehensiveAdvice>()
   }
 
+  private val projectGraphFiles: Map<String, File> by lazy {
+    projectGraphMapFrom(graphs)
+  }
+
+  private val lazyDepGraph = LazyDependencyGraph(projectGraphFiles)
+
+  private val expectedResultGraph: DependencyGraph by lazy {
+    GraphTrimmer(
+      comprehensiveAdvice = compAdvice,
+      projectGraphProvider = this::getDependencyGraph
+    ).trimmedGraph
+  }
+
   @TaskAction fun action() {
     val outputFile = output.getAndDelete()
     val mergedGraphModFile = mergedGraphModPath.getAndDelete()
@@ -71,30 +91,7 @@ abstract class BuildMetricsTask : DefaultTask() {
     logger.quiet("Modified graph: ${mergedGraphModFile.absolutePath}")
   }
 
-  private val projectGraphs: Map<String, File> by lazy {
-    projectGraphMapFrom(graphs)
-  }
-
-  private val expectedResultGraph: DependencyGraph by lazy {
-    GraphTrimmer(compAdvice) { path ->
-      projectGraphs[path]?.fromJson()
-    }.trimmedGraph
-//    compAdvice.mapNotNull { projAdvice ->
-//      val projPath = projAdvice.projectPath
-//      val projectGraph = projectGraphs[projPath]?.fromJson<DependencyGraph>()
-//        ?: return@mapNotNull null
-//
-//      val (addAdvice, removeAdvice) = projAdvice.dependencyAdvice.partitionOf(
-//        { it.isAdd() },
-//        { it.isRemove() }
-//      )
-//      addAdvice.forEach {
-//        projectGraph.addEdge(from = projPath, to = it.dependency.identifier)
-//      }
-//
-//      projectGraph.removeEdges(projPath, removeAdvice.map { removal ->
-//        projPath to removal.dependency.identifier
-//      })
-//    }.merge()
+  private fun getDependencyGraph(projectPath: String): DependencyGraph {
+    return lazyDepGraph.getDependencyGraph(projectPath)
   }
 }

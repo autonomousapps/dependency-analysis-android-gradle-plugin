@@ -7,6 +7,7 @@ import com.autonomousapps.advice.ComprehensiveAdvice
 import com.autonomousapps.advice.RippleDetector
 import com.autonomousapps.graph.DependencyGraph
 import com.autonomousapps.internal.advice.RippleWriter
+import com.autonomousapps.internal.graph.LazyDependencyGraph
 import com.autonomousapps.internal.graph.projectGraphMapFrom
 import com.autonomousapps.internal.utils.*
 import org.gradle.api.DefaultTask
@@ -21,7 +22,6 @@ import org.gradle.workers.WorkAction
 import org.gradle.workers.WorkParameters
 import org.gradle.workers.WorkerExecutor
 import java.io.File
-import java.io.FileNotFoundException
 import javax.inject.Inject
 
 abstract class RipplesTask @Inject constructor(
@@ -85,7 +85,7 @@ abstract class RipplesTask @Inject constructor(
 
     private val logger = getLogger<RipplesTask>()
 
-    private val projectGraphMap = mutableMapOf<String, DependencyGraph>()
+    private val lazyDepGraph = LazyDependencyGraph(parameters.graphFiles.get())
 
     override fun execute() {
       val outputFile = parameters.output.getAndDelete()
@@ -108,11 +108,7 @@ abstract class RipplesTask @Inject constructor(
     }
 
     private fun getDependencyGraph(projectPath: String): DependencyGraph {
-      return projectGraphMap.getOrPut(projectPath) {
-        parameters.graphFiles.get()[projectPath]
-          ?.fromJson()
-          ?: throw FileNotFoundException("No graph file found for $projectPath")
-      }
+      return lazyDepGraph.getDependencyGraph(projectPath)
     }
   }
 }
