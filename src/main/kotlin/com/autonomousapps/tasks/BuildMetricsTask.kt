@@ -22,7 +22,6 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
 /**
  * Metrics at the whole-build level.
@@ -64,22 +63,14 @@ abstract class BuildMetricsTask : DefaultTask() {
     adviceReport.fromJsonList<ComprehensiveAdvice>()
   }
 
-  private val projectGraphFiles: Map<String, File> by lazy {
-    projectGraphMapFrom(graphs)
-  }
-
-  private val lazyDepGraph = LazyDependencyGraph(projectGraphFiles)
-
-  private val expectedResultGraph: DependencyGraph by lazy {
-    GraphTrimmer(
-      buildHealth = compAdvice,
-      projectGraphProvider = this::getDependencyGraph
-    ).trimmedGraph
-  }
-
   @TaskAction fun action() {
     val outputFile = output.getAndDelete()
     val mergedGraphModFile = mergedGraphModPath.getAndDelete()
+
+    val expectedResultGraph = GraphTrimmer(
+      buildHealth = compAdvice,
+      projectGraphProvider = this::getDependencyGraph
+    ).trimmedGraph
 
     val metrics = ProjectMetrics.fromGraphs(
       origGraph = origGraph, expectedResultGraph = expectedResultGraph
@@ -91,7 +82,11 @@ abstract class BuildMetricsTask : DefaultTask() {
     logger.quiet("Modified graph: ${mergedGraphModFile.absolutePath}")
   }
 
-  private fun getDependencyGraph(projectPath: String): DependencyGraph {
-    return lazyDepGraph.getDependencyGraph(projectPath)
+  private val lazyDepGraph by lazy {
+    LazyDependencyGraph(projectGraphMapFrom(graphs))
+  }
+
+  private fun getDependencyGraph(projectPath: String): DependencyGraph? {
+    return lazyDepGraph.getDependencyGraphOrNull(projectPath)
   }
 }
