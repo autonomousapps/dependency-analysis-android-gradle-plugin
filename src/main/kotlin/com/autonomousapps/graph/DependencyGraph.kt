@@ -148,6 +148,9 @@ internal class DependencyGraph {
     edges().forEach { edge ->
       if (!edges.contains(edge.from.identifier to edge.to.identifier)) {
         graph.addEdge(edge)
+      } else {
+        graph.addNode(edge.from.identifier)
+        graph.addNode(edge.to.identifier)
       }
     }
 
