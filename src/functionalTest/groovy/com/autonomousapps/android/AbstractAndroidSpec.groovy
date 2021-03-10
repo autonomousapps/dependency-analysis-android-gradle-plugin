@@ -11,10 +11,10 @@ abstract class AbstractAndroidSpec extends AbstractFunctionalSpec {
 
   def cleanup() {
     if (androidProject != null) {
-//      clean(androidProject)
+      clean(androidProject)
     }
     if (gradleProject != null) {
-//      clean(gradleProject.rootDir)
+      clean(gradleProject.rootDir)
     }
   }
 
