@@ -14,7 +14,7 @@ abstract class AbstractAndroidSpec extends AbstractFunctionalSpec {
       clean(androidProject)
     }
     if (gradleProject != null) {
-      clean(gradleProject.rootDir)
+//      clean(gradleProject.rootDir)
     }
   }
 

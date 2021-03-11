@@ -1,11 +1,13 @@
 package com.autonomousapps.tasks
 
 import com.autonomousapps.TASK_GROUP_DEP_INTERNAL
-import com.autonomousapps.graph.*
-import com.autonomousapps.internal.utils.*
+import com.autonomousapps.graph.DependencyGraph
+import com.autonomousapps.graph.GraphWriter
+import com.autonomousapps.internal.utils.asString
 import com.autonomousapps.internal.utils.getAndDelete
 import com.autonomousapps.internal.utils.mapNotNullToSet
 import com.autonomousapps.internal.utils.toIdentifier
+import com.autonomousapps.internal.utils.toJson
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.FileCollectionDependency
@@ -15,7 +17,13 @@ import org.gradle.api.attributes.Attribute
 import org.gradle.api.attributes.Category
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.tasks.*
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.Classpath
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.TaskAction
 
 @CacheableTask
 abstract class DependencyGraphPerVariant : DefaultTask() {
@@ -27,6 +35,14 @@ abstract class DependencyGraphPerVariant : DefaultTask() {
 
   @get:Classpath
   abstract val compileClasspathArtifacts: ConfigurableFileCollection
+
+  /**
+   * This is required as an input, in addition to [compileClasspathArtifacts], because the latter
+   * (which is just a classpath), can be the same for multiple projects, which leads to incorrect
+   * output, since we expect our output to have a node for _this_ project.
+   */
+  @get:Input
+  abstract val projectPath: Property<String>
 
   @get:Internal
   lateinit var compileClasspath: Configuration

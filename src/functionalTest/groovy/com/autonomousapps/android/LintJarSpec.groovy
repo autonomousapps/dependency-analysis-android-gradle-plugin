@@ -1,9 +1,6 @@
 package com.autonomousapps.android
 
 import com.autonomousapps.AdviceHelper
-import com.autonomousapps.advice.Advice
-import com.autonomousapps.advice.ComprehensiveAdvice
-import com.autonomousapps.advice.PluginAdvice
 import com.autonomousapps.android.projects.LintJarProject
 import com.autonomousapps.android.projects.TimberProject
 import spock.lang.Unroll

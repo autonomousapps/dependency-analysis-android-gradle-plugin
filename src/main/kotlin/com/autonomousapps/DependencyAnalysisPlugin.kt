@@ -792,6 +792,7 @@ class DependencyAnalysisPlugin : Plugin<Project> {
         .artifacts
         .artifactFiles
       )
+      projectPath.set(this@analyzeDependencies.path)
 
       outputJson.set(outputPaths.graphPath)
       outputDot.set(outputPaths.graphDotPath)

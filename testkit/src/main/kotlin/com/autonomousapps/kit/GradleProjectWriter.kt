@@ -107,6 +107,10 @@ class GradleProjectWriter(
       stylesPath.parent.toFile().mkdirs()
       stylesPath.toFile().writeText(androidSubproject.styles.toString())
 
+      val stringsPath = projectPath.resolve("src/main/res/values/strings.xml")
+      stringsPath.parent.toFile().mkdirs()
+      stringsPath.toFile().writeText(androidSubproject.strings.toString())
+
       val colorsPath = projectPath.resolve("src/main/res/values/colors.xml")
       colorsPath.parent.toFile().mkdirs()
       colorsPath.toFile().writeText(androidSubproject.colors.toString())
