@@ -144,6 +144,9 @@ fun getUnusedDirectDependenciesPath(variantName: String) =
 fun getAbiAnalysisPath(variantName: String) =
   "${getVariantDirectory(variantName)}/intermediates/abi.json"
 
+fun getGraphPerVariantPath(variantName: String) =
+  "${getVariantDirectory(variantName)}/graph/graph.json"
+
 fun getAdvicePath(variantName: String) = "${getVariantDirectory(variantName)}/advice.json"
 fun getAdviceConsolePath(variantName: String) =
   "${getVariantDirectory(variantName)}/advice-console.txt"

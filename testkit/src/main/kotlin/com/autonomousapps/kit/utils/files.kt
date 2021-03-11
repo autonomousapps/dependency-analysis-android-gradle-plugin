@@ -54,8 +54,8 @@ fun GradleProject.buildPathForName(path: String): Path {
 fun GradleProject.buildFileForName(path: String): File = buildPathForName(path).toFile()
 
 /**
- * Returns the file specified, relative to the subproject specified by [projectPath].
+ * Returns the file specified, relative to the subproject specified by [projectName].
  */
-fun GradleProject.resolveFromName(projectPath: String, relativePath: String): File {
-  return buildPathForName(projectPath).resolve(relativePath).toFile()
+fun GradleProject.resolveFromName(projectName: String, relativePath: String): File {
+  return buildPathForName(projectName).resolve(relativePath).toFile()
 }

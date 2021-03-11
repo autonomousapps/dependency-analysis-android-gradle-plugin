@@ -16,11 +16,8 @@ internal sealed class Node(
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (javaClass != other?.javaClass) return false
 
-    other as Node
-
-    if (identifier != other.identifier) return false
+    if (identifier != (other as? Node)?.identifier) return false
 
     return true
   }
@@ -40,7 +37,16 @@ internal data class BareNode(override val identifier: String) : Node(identifier)
 internal data class ConsumerNode(
   override val identifier: String,
   val classes: Set<String>? = null
-) : Node(identifier)
+) : Node(identifier) {
+
+  override fun equals(other: Any?): Boolean {
+    return super.equals(other)
+  }
+
+  override fun hashCode(): Int {
+    return super.hashCode()
+  }
+}
 
 /**
  * A dependency. May be a project or an external binary. It "provides" facilities for use by the
@@ -49,7 +55,16 @@ internal data class ConsumerNode(
 internal data class ProducerNode(
   override val identifier: String,
   val reasonableDependency: ReasonableDependency? = null
-) : Node(identifier)
+) : Node(identifier) {
+
+  override fun equals(other: Any?): Boolean {
+    return super.equals(other)
+  }
+
+  override fun hashCode(): Int {
+    return super.hashCode()
+  }
+}
 
 internal object NodePrinter {
 

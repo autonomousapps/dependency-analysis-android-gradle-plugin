@@ -35,14 +35,22 @@ final class BuildMetricsProject extends AbstractProject {
         bs.plugins = [Plugin.androidAppPlugin]
         bs.dependencies = [
           appcompat('implementation'),
-          project('implementation', ':strings')
+          project('implementation', ':strings'),
+          project('implementation', ':not-strings')
         ]
       }
     }
     builder.withAndroidSubproject('strings') { s ->
       s.manifest = AndroidManifest.defaultLib('com.example.strings')
       s.withBuildScript { bs ->
-        bs.plugins = [Plugin.androidLibPlugin]//, Plugin.kotlinAndroidPlugin]
+        bs.plugins = [Plugin.androidLibPlugin, Plugin.kotlinAndroidPlugin]
+        bs.android = AndroidBlock.defaultAndroidLibBlock(false)
+      }
+    }
+    builder.withAndroidSubproject('not-strings') { s ->
+      s.manifest = AndroidManifest.defaultLib('com.example.not.strings')
+      s.withBuildScript { bs ->
+        bs.plugins = [Plugin.androidLibPlugin, Plugin.kotlinAndroidPlugin]
         bs.android = AndroidBlock.defaultAndroidLibBlock(false)
       }
     }

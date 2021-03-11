@@ -1,6 +1,7 @@
 package com.autonomousapps
 
 import com.autonomousapps.advice.*
+import com.autonomousapps.graph.Edge
 import com.autonomousapps.internal.OutputPathsKt
 import com.autonomousapps.internal.utils.MoshiUtils
 import com.autonomousapps.kit.GradleProject
@@ -12,6 +13,15 @@ import com.squareup.moshi.Types
  * Helps specs find advice output in test projects.
  */
 final class AdviceHelper {
+
+  static List<Edge> actualGraph(GradleProject gradleProject, String projectName, String variant = 'debug') {
+    if (projectName.startsWith(':')) {
+      throw new IllegalArgumentException("Expects a project name, not a path. Was $projectName")
+    }
+    File advice = Files.resolveFromName(
+      gradleProject, projectName, OutputPathsKt.getGraphPerVariantPath(variant))
+    return fromGraphJson(advice.text)
+  }
 
   static List<ComprehensiveAdvice> actualBuildHealth(GradleProject gradleProject) {
     File buildHealth = Files.resolveFromRoot(gradleProject, OutputPathsKt.getAdviceAggregatePath())
@@ -29,8 +39,8 @@ final class AdviceHelper {
     return fromAdviceJson(advice.text)
   }
 
-  static List<Advice> actualAdviceForSubproject(GradleProject gradleProject, String projectPath) {
-    File advice = Files.resolveFromName(gradleProject, projectPath, OutputPathsKt.getAdvicePath('main'))
+  static List<Advice> actualAdviceForSubproject(GradleProject gradleProject, String projectName) {
+    File advice = Files.resolveFromName(gradleProject, projectName, OutputPathsKt.getAdvicePath('main'))
     return fromAdviceJson(advice.text)
   }
 
@@ -40,6 +50,12 @@ final class AdviceHelper {
       gradleProject, OutputPathsKt.getAdviceConsolePath(first.variant)
     )
     return console.text
+  }
+
+  private static List<Edge> fromGraphJson(String json) {
+    def type = Types.newParameterizedType(List, Edge)
+    def adapter = MoshiUtils.MOSHI.<List<Edge>> adapter(type)
+    return adapter.fromJson(json)
   }
 
   private static List<Advice> fromAdviceJson(String json) {
