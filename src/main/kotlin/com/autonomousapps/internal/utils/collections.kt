@@ -3,12 +3,11 @@ package com.autonomousapps.internal.utils
 import org.gradle.api.file.FileCollection
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
-import java.util.*
+import java.util.Collections
+import java.util.Comparator
+import java.util.TreeSet
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
-import kotlin.collections.LinkedHashSet
 
 /**
  * Transforms a [ZipFile] into a collection of [ZipEntry]s, which contains only class files (and not
@@ -144,8 +143,8 @@ internal inline fun NodeList.filterToSet(predicate: (Node) -> Boolean): Set<Node
 }
 
 internal inline fun <T> Iterable<T>.partitionToSets(predicate: (T) -> Boolean): Pair<Set<T>, Set<T>> {
-  val first = HashSet<T>()
-  val second = HashSet<T>()
+  val first = LinkedHashSet<T>()
+  val second = LinkedHashSet<T>()
   for (element in this) {
     if (predicate(element)) {
       first.add(element)
@@ -162,8 +161,8 @@ internal inline fun <T> Iterable<T>.partitionToSets(predicate: (T) -> Boolean): 
 internal inline fun <T> Iterable<T>.partitionOf(
   predicate1: (T) -> Boolean, predicate2: (T) -> Boolean
 ): Pair<Set<T>, Set<T>> {
-  val first = HashSet<T>()
-  val second = HashSet<T>()
+  val first = LinkedHashSet<T>()
+  val second = LinkedHashSet<T>()
   for (element in this) {
     if (predicate1(element)) {
       first.add(element)
@@ -197,8 +196,4 @@ internal fun <T, U> List<Pair<T, MutableSet<U>>>.mergedMap(): Map<T, Set<U>> {
       merge(key, values) { old, new -> old.apply { addAll(new) } }
     }
   }
-}
-
-internal fun <T : Comparable<T>> Iterable<T>.toSortedList(): List<T> {
-  return toSortedSet().toList()
 }

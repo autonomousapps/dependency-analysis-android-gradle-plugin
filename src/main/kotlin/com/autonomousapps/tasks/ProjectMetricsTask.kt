@@ -39,8 +39,6 @@ abstract class ProjectMetricsTask : DefaultTask() {
   @get:OutputFile
   abstract val output: RegularFileProperty
 
-  // TODO remove these two output files
-
   @get:OutputFile
   abstract val projGraphPath: RegularFileProperty
 

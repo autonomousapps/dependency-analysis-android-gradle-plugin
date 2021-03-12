@@ -891,8 +891,6 @@ class DependencyAnalysisPlugin : Plugin<Project> {
       graphJson.set(aggregateGraphTask.flatMap { it.outputJson })
 
       output.set(paths.projMetricsPath)
-
-      // TODO remove
       projGraphPath.set(paths.projGraphDotPath)
       projGraphModPath.set(paths.projGraphModDotPath)
     }

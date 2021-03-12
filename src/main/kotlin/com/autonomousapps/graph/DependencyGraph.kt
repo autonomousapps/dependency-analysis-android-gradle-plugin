@@ -1,7 +1,5 @@
 package com.autonomousapps.graph
 
-import com.autonomousapps.internal.utils.toSortedList
-
 internal class DependencyGraph {
 
   /* Primary properties. */
@@ -174,7 +172,7 @@ internal class DependencyGraph {
 
     other as DependencyGraph
 
-    if (edges().toSortedList() != other.edges().toSortedList()) return false
+    if (edges().sorted() != other.edges().sorted()) return false
     if (nodes.keys.sorted() != other.nodes.keys.sorted()) return false
 
     return true

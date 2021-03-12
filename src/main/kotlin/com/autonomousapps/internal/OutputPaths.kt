@@ -90,8 +90,6 @@ internal class NoVariantOutputPaths(private val project: Project) {
    */
 
   val projMetricsPath = layout("$ROOT_DIR/proj-metrics.json")
-
-  // TODO remove: temp
   val projGraphDotPath = layout("$ROOT_DIR/proj-graph.gv")
   val projGraphModDotPath = layout("$ROOT_DIR/proj-mod-graph.gv")
 
